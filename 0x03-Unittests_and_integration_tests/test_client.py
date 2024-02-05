@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Client Test Module"""
 import unittest
-from parameterized import parameterized
-from unittest.mock import patch, MagicMock, PropertyMock
+from parameterized import parameterized, parameterized_class
+from unittest.mock import patch, MagicMock, PropertyMock, Mock
 from client import GithubOrgClient
 from fixtures import TEST_PAYLOAD
 
@@ -53,3 +53,55 @@ class TestGithubOrgClient(unittest.TestCase):
             GithubOrgClient.has_license(repo, license_key),
             expected
         )
+
+    @parameterized_class((
+        "org_payload",
+        "repos_payload",
+        "expected_repos",
+        "apache2_repos"),
+        TEST_PAYLOAD)
+    class TestIntegrationGithubOrgClient(unittest.TestCase):
+        """TestIntegrationGithubOrgClient Class"""
+        @classmethod
+        def setUpClass(cls):
+            """Set up class"""
+            def effect(url):
+                """side effect"""
+                rp = []
+                mock = Mock()
+                for payload in TEST_PAYLOAD:
+                    if url == payload[0]["repos_url"]:
+                        rp = payload[1]
+                        break
+                mock.json.return_value = rp
+                return mock
+            cls.get_patcher = patch('requests.get', side_effect=effect)
+            cls.org_patcher = patch(
+                'client.GithubOrgClient.org',
+                new_callable=PropertyMock,
+                return_value=cls.org_payload
+            )
+            cls.get_patcher.start()
+            cls.org_patcher.start()
+
+        @classmethod
+        def tearDownClass(cls):
+            """Tear down class"""
+            cls.get_patcher.stop()
+            cls.org_patcher.stop()
+
+        def test_public_repos(self):
+            """Test public repos"""
+            test_class = GithubOrgClient("google/repos")
+            self.assertEqual(
+                test_class.public_repos(),
+                self.expected_repos
+            )
+
+        def test_public_repos_with_license(self):
+            """Test public repos with license"""
+            test_class = GithubOrgClient("google/repos")
+            self.assertEqual(
+                test_class.public_repos("apache-2.0"),
+                self.apache2_repos
+            )
