@@ -19,5 +19,5 @@ class TestGithubOrgClient(unittest.TestCase):
         test_class = GithubOrgClient(name_org)
         test_class.org()
         mock_get.assert_called_once_with(
-            f"https://api.github.com/orgs/{name_org}"
+            test_class.ORG_URL.format(org=name_org)
         )
