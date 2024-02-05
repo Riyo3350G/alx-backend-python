@@ -21,3 +21,13 @@ class TestGithubOrgClient(unittest.TestCase):
         mock_get.assert_called_once_with(
             test_class.ORG_URL.format(org=name_org)
         )
+
+    @patch('client.get_json')
+    def test_public_repos_url(self, mock_get: MagicMock):
+        """Test public repos url"""
+        test_class = GithubOrgClient("google")
+        test_class.org()
+        self.assertEqual(
+            test_class._public_repos_url,
+            mock_get.return_value["repos_url"]
+        )
