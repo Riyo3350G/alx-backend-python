@@ -2,7 +2,7 @@
 """Client Test Module"""
 import unittest
 from parameterized import parameterized
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, PropertyMock
 from client import GithubOrgClient
 from fixtures import TEST_PAYLOAD
 
@@ -30,4 +30,15 @@ class TestGithubOrgClient(unittest.TestCase):
         self.assertEqual(
             test_class._public_repos_url,
             mock_get.return_value["repos_url"]
+        )
+
+    @patch('client.get_json')
+    def test_public_repos(self, mock_get: MagicMock):
+        """Test public repos"""
+        test_class = GithubOrgClient("google")
+        test_class.org()
+        test_class.repos_payload()
+        self.assertEqual(
+            test_class.public_repos(),
+            [repo["name"] for repo in mock_get.return_value]
         )
